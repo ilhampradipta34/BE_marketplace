@@ -9,29 +9,34 @@ use Illuminate\Http\Request;
 
 class ProductController extends ApiController
 {
-    public function index(Request $r)
+    public function index(Request $request)
     {
-        $per = min(100, max(1, (int) $r->query('per_page', 10)));
-        $q = Product::query()->when($r->query('search'), fn ($q, $s) => $q->where(fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($s).'%'])->orWhereRaw('LOWER(product_code) LIKE ?', ['%'.mb_strtolower($s).'%'])));
-        $p = $q->orderBy('id')->paginate($per);
+        $perPage = min(100, max(1, (int) $request->query('per_page', 10)));
+        $search = $request->query('search');
+        $products = Product::query()
+            ->when($search, fn ($productQuery, $searchTerm) => $productQuery->where(fn ($productQuery) => $productQuery
+                ->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($searchTerm).'%'])
+                ->orWhereRaw('LOWER(product_code) LIKE ?', ['%'.mb_strtolower($searchTerm).'%'])))
+            ->orderBy('id')
+            ->paginate($perPage);
 
-        return $this->ok(ProductResource::collection($p)->resolve(), 'OK', 200, ['page' => $p->currentPage(), 'per_page' => $p->perPage(), 'total' => $p->total()]);
+        return $this->ok(ProductResource::collection($products)->resolve(), 'OK', 200, ['page' => $products->currentPage(), 'per_page' => $products->perPage(), 'total' => $products->total()]);
     }
 
-    public function store(StoreProductRequest $r)
+    public function store(StoreProductRequest $request)
     {
-        return $this->transaction(function () use ($r) {
-            $product = Product::create($r->validated());
+        return $this->transaction(function () use ($request) {
+            $product = Product::create($request->validated());
 
             return $this->ok(new ProductResource($product), 'Produk dibuat', 201);
         });
     }
 
-    public function update(StoreProductRequest $r, int $id)
+    public function update(StoreProductRequest $request, int $id)
     {
-        return $this->transaction(function () use ($r, $id) {
+        return $this->transaction(function () use ($request, $id) {
             $product = Product::findOrFail($id);
-            $product->update($r->validated());
+            $product->update($request->validated());
 
             return $this->ok(new ProductResource($product), 'Produk diperbarui');
         });

@@ -9,17 +9,17 @@ use Illuminate\Http\Request;
 
 class CustomerController extends ApiController
 {
-    public function index(Request $r)
+    public function index(Request $request)
     {
-        $p = Customer::orderBy('id')->paginate(min(100, max(1, (int) $r->query('per_page', 10))));
+        $customers = Customer::orderBy('id')->paginate(min(100, max(1, (int) $request->query('per_page', 10))));
 
-        return $this->ok(CustomerResource::collection($p)->resolve(), 'OK', 200, ['page' => $p->currentPage(), 'per_page' => $p->perPage(), 'total' => $p->total()]);
+        return $this->ok(CustomerResource::collection($customers)->resolve(), 'OK', 200, ['page' => $customers->currentPage(), 'per_page' => $customers->perPage(), 'total' => $customers->total()]);
     }
 
-    public function store(StoreCustomerRequest $r)
+    public function store(StoreCustomerRequest $request)
     {
-        return $this->transaction(function () use ($r) {
-            $customer = Customer::create($r->validated());
+        return $this->transaction(function () use ($request) {
+            $customer = Customer::create($request->validated());
 
             return $this->ok(new CustomerResource($customer), 'Pelanggan dibuat', 201);
         });
