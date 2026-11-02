@@ -8,7 +8,6 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class OrderController extends ApiController
@@ -28,7 +27,7 @@ class OrderController extends ApiController
     public function store(StoreOrderRequest $r)
     {
         $data = $r->validated();
-        $order = DB::transaction(function () use ($data, $r) {
+        $order = $this->transaction(function () use ($data, $r) {
             $customer = Customer::whereKey($data['customer_id'])->lockForUpdate()->firstOrFail();
             $pending = $customer->orders()->where('status', 'PENDING')->count();
             if ($pending >= 3) {
@@ -58,7 +57,7 @@ class OrderController extends ApiController
                 $o->items()->create(['product_id' => $p->id, 'quantity' => $item['quantity'], 'unit_price' => $p->price, 'subtotal' => (float) $p->price * $item['quantity']]);
             }
 
-return $o->load('customer', 'items.product');
+            return $o->load('customer', 'items.product');
         });
 
         return $this->ok(new OrderResource($order), 'Order dibuat', 201);
@@ -71,7 +70,7 @@ return $o->load('customer', 'items.product');
 
     public function cancel(int $id)
     {
-        return DB::transaction(function () use ($id) {
+        return $this->transaction(function () use ($id) {
             $o = Order::with('items')->lockForUpdate()->findOrFail($id);
             if (! in_array($o->status, ['PENDING', 'PAID'])) {
                 return response()->json(['success' => false, 'message' => 'Transisi status order tidak valid'], 409);
@@ -85,13 +84,13 @@ return $o->load('customer', 'items.product');
 
     private function changeStatus(int $id, string $status)
     {
-        return DB::transaction(function () use ($id, $status) {
+        return $this->transaction(function () use ($id, $status) {
             $o = Order::whereKey($id)->lockForUpdate()->firstOrFail();
             if ($o->status !== 'PENDING') {
                 return response()->json(['success' => false, 'message' => 'Transisi status order tidak valid'], 409);
             } $o->update(['status' => $status]);
 
-            return $this->ok(new OrderResource($o->load('customer','items.product')),'Status order diperbarui');
+            return $this->ok(new OrderResource($o->load('customer', 'items.product')), 'Status order diperbarui');
         });
     }
 }

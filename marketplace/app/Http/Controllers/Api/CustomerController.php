@@ -18,6 +18,10 @@ class CustomerController extends ApiController
 
     public function store(StoreCustomerRequest $r)
     {
-        return $this->ok(new CustomerResource(Customer::create($r->validated())), 'Pelanggan dibuat', 201);
+        return $this->transaction(function () use ($r) {
+            $customer = Customer::create($r->validated());
+
+            return $this->ok(new CustomerResource($customer), 'Pelanggan dibuat', 201);
+        });
     }
 }

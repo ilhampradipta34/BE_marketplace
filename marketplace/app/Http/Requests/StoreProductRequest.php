@@ -16,6 +16,37 @@ class StoreProductRequest extends FormRequest
     {
         $id = $this->route('id');
 
-        return ['product_code' => ['required', 'string', 'max:80', Rule::unique('products', 'product_code')->ignore($id)], 'name' => ['required', 'string', 'max:255'], 'variant' => ['nullable', 'string', 'max:100'], 'price' => ['required', 'numeric', 'gt:0'], 'stock' => ['required', 'integer', 'min:0']];
+        return [
+            'product_code' => [
+                'required',
+                'string',
+                'max:80',
+                Rule::unique('products', 'product_code')->ignore($id),
+            ],
+
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'variant' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'price' => [
+                'required',
+                'numeric',
+                'gt:0',
+            ],
+
+            'stock' => [
+                'required',
+                'integer',
+                'min:0',
+            ],
+        ];
     }
 }

@@ -20,14 +20,20 @@ class ProductController extends ApiController
 
     public function store(StoreProductRequest $r)
     {
-        return $this->ok(new ProductResource(Product::create($r->validated())), 'Produk dibuat', 201);
+        return $this->transaction(function () use ($r) {
+            $product = Product::create($r->validated());
+
+            return $this->ok(new ProductResource($product), 'Produk dibuat', 201);
+        });
     }
 
     public function update(StoreProductRequest $r, int $id)
     {
-        $p = Product::findOrFail($id);
-        $p->update($r->validated());
+        return $this->transaction(function () use ($r, $id) {
+            $product = Product::findOrFail($id);
+            $product->update($r->validated());
 
-        return $this->ok(new ProductResource($p), 'Produk diperbarui');
+            return $this->ok(new ProductResource($product), 'Produk diperbarui');
+        });
     }
 }
