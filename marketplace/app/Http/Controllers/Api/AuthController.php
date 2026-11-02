@@ -29,7 +29,7 @@ class AuthController extends ApiController
                 401
             );
         }
-        $token = $user->createToken('api')->plainTextToken;
+        $token = $user->createToken('token')->plainTextToken;
 
         return $this->ok(
             [
